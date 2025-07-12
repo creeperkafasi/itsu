@@ -163,9 +163,16 @@ class _HomePageState extends State<HomePage> {
                             subtitle: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  "${DateFormat('HH:mm').format(anime.episodeDate.toLocal())} - "
-                                  "${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}",
+                                Row(
+                                  children: [
+                                    Text(
+                                      DateFormat('HH:mm').format(anime.episodeDate.toLocal()),
+                                    ),
+                                    VerticalDivider(),
+                                    Text(
+                                      "(Episode ${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""})",
+                                    ),
+                                  ],
                                 ),
                                 if (anime.airingStatus.isNotEmpty)
                                   Padding(
@@ -185,13 +192,17 @@ class _HomePageState extends State<HomePage> {
                                     onPressed: () {
                                       launchUrl(
                                         Uri.parse(
-                                          "https://calendar.google.com/calendar/u/0/r/eventedit?dates="
-                                          "${anime.episodeDate.toIso8601String().replaceAll(":", "")}"
-                                          "/"
-                                          "${anime.episodeDate.add(Duration(minutes: anime.lengthMin)).toIso8601String().replaceAll(":", "")}"
-                                          "&location"
-                                          "&text=${anime.title}"
-                                          "&details=${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}",
+                                          "https://calendar.google.com/calendar/u/0/r/eventedit",
+                                        ).replace(
+                                          queryParameters: {
+                                            "dates":
+                                                "${anime.episodeDate.toIso8601String().replaceAll(RegExp(r'[:\-]'), '')}/"
+                                                "${anime.episodeDate.add(Duration(minutes: anime.lengthMin)).toIso8601String().replaceAll(RegExp(r'[:\-]'), '')}",
+                                            "location": "",
+                                            "text": anime.title,
+                                            "details":
+                                                "Episode ${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}",
+                                          },
                                         ),
                                       );
                                     },
