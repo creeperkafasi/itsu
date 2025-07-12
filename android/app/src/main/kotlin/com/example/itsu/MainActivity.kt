@@ -1,4 +1,4 @@
-package com.example.itsu
+package com.creeperkafasi.itsu
 
 import io.flutter.embedding.android.FlutterActivity
 

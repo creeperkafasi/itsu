@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +8,7 @@ import 'package:itsu/animedetails.dart';
 import 'package:itsu/api.dart';
 import 'package:itsu/data.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:week_of_year/week_of_year.dart';
 
 const dayNames = {
@@ -150,11 +154,34 @@ class _HomePageState extends State<HomePage> {
                           final anime = data[index];
                           return ListTile(
                             visualDensity: VisualDensity.comfortable,
-                            leading: Image.network(
-                              width: 48,
-                              "$animescheduleImg${anime.imageVersionRoute}",
-                              errorBuilder: (context, error, stackTrace) =>
-                                  SizedBox(width: 48),
+                            leading: GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => Dismissible(
+                                    behavior: HitTestBehavior.deferToChild,
+                                    direction: DismissDirection.vertical,
+                                    onDismissed: (_) => Navigator.pop(context),
+                                    key: Key(
+                                      "$animescheduleImg${anime.imageVersionRoute}",
+                                    ),
+                                    child: Dialog(
+                                      child: Image.network(
+                                        "$animescheduleImg${anime.imageVersionRoute}",
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                SizedBox(width: 48),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Image.network(
+                                width: 48,
+                                "$animescheduleImg${anime.imageVersionRoute}",
+                                errorBuilder: (context, error, stackTrace) =>
+                                    SizedBox(width: 48),
+                              ),
                             ),
                             title: Text(
                               anime.title,
@@ -166,7 +193,9 @@ class _HomePageState extends State<HomePage> {
                                 Row(
                                   children: [
                                     Text(
-                                      DateFormat('HH:mm').format(anime.episodeDate.toLocal()),
+                                      DateFormat(
+                                        'HH:mm',
+                                      ).format(anime.episodeDate.toLocal()),
                                     ),
                                     VerticalDivider(),
                                     Text(
@@ -174,39 +203,12 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ],
                                 ),
-                                if (anime.airingStatus.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: Text(
-                                      "(${anime.airingStatus})",
-                                      style: TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
                             trailing:
                                 (anime.episodeDate.isAfter(DateTime.now()))
                                 ? IconButton(
-                                    onPressed: () {
-                                      launchUrl(
-                                        Uri.parse(
-                                          "https://calendar.google.com/calendar/u/0/r/eventedit",
-                                        ).replace(
-                                          queryParameters: {
-                                            "dates":
-                                                "${anime.episodeDate.toIso8601String().replaceAll(RegExp(r'[:\-]'), '')}/"
-                                                "${anime.episodeDate.add(Duration(minutes: anime.lengthMin)).toIso8601String().replaceAll(RegExp(r'[:\-]'), '')}",
-                                            "location": "",
-                                            "text": anime.title,
-                                            "details":
-                                                "Episode ${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}",
-                                          },
-                                        ),
-                                        mode: LaunchMode.externalNonBrowserApplication
-                                      );
-                                    },
+                                    onPressed: () => addAnimeToCalendar(anime),
                                     icon: Icon(Icons.notification_add),
                                   )
                                 : IconButton(
@@ -230,6 +232,47 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           );
+        },
+      ),
+    );
+  }
+}
+
+void addAnimeToCalendar(AnimeDetails anime) async {
+  String title = "${anime.title} - Episode ${anime.episodeNumber}";
+  String description =
+      """\
+Episode ${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}
+""";
+
+  if (Platform.isAndroid) {
+    final intent = AndroidIntent(
+      action: 'android.intent.action.INSERT',
+      data: 'content://com.android.calendar/event',
+      type: "vnd.android.cursor.dir/event",
+      arguments: {
+        "title": "${anime.title} - Episode ${anime.episodeNumber}",
+        "description":
+            """\
+Episode ${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}
+""",
+        "beginTime": anime.episodeDate.millisecondsSinceEpoch,
+        "endTime": anime.episodeDate
+            .add(Duration(minutes: anime.lengthMin))
+            .millisecondsSinceEpoch,
+      },
+    );
+
+    intent.launch();
+  } else {
+    launchUrl(
+      Uri.parse("https://calendar.google.com/u/0/r/eventedit").replace(
+        queryParameters: {
+          "text": title,
+          "details": description,
+          "dates":
+              "${anime.episodeDate.toUtc().toIso8601String().replaceAll(RegExp(r"[:-]"), "")}/"
+              "${anime.episodeDate.add(Duration(minutes: anime.lengthMin)).toUtc().toIso8601String().replaceAll(RegExp(r"[:-]"), "")}",
         },
       ),
     );
