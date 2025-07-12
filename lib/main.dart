@@ -204,6 +204,7 @@ class _HomePageState extends State<HomePage> {
                                                 "Episode ${anime.episodeNumber}${anime.episodes != null ? "/${anime.episodes}" : ""}",
                                           },
                                         ),
+                                        mode: LaunchMode.externalNonBrowserApplication
                                       );
                                     },
                                     icon: Icon(Icons.notification_add),
