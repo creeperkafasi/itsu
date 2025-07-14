@@ -1,4 +1,5 @@
-class AnimeDetails {
+/// TimeTable Anime
+class TTAnime {
   final String title;
   final String route;
   final String romaji;
@@ -18,7 +19,7 @@ class AnimeDetails {
   final Streams streams;
   final String airingStatus;
 
-  AnimeDetails({
+  TTAnime({
     required this.title,
     required this.route,
     required this.romaji,
@@ -39,8 +40,8 @@ class AnimeDetails {
     required this.airingStatus,
   });
 
-  factory AnimeDetails.fromJson(Map<String, dynamic> json) {
-    return AnimeDetails(
+  factory TTAnime.fromJson(Map<String, dynamic> json) {
+    return TTAnime(
       title: json['title'] as String? ?? '', // Provide default if null
       route: json['route'] as String? ?? '',
       romaji: json['romaji'] as String? ?? '',
@@ -87,8 +88,8 @@ class AnimeDetails {
     };
   }
 
-  static List<AnimeDetails> parseList(List<dynamic> jsonList) {
-    return jsonList.map((json) => AnimeDetails.fromJson(json)).toList();
+  static List<TTAnime> parseList(List<dynamic> jsonList) {
+    return jsonList.map((json) => TTAnime.fromJson(json)).toList();
   }
 }
 

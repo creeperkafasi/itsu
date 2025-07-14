@@ -1,22 +1,24 @@
 import "dart:convert";
 
 import "package:http/http.dart" as http;
-import "package:itsu/animedetails.dart";
+import "package:itsu/api/anime.dart";
+import "package:itsu/api/ttanime.dart";
 
-const animescheduleImg =
+const animeScheduleBase = "https://animeschedule.net";
+const animeScheduleImg =
     "https://img.animeschedule.net/production/assets/public/img/";
-const animescheduleApi = "https://animeschedule.net/api/v3";
+const animeScheduleApi = "https://animeschedule.net/api/v3";
 
 const token = "Bearer K7JgAiSXuIGPgnrkGDZ3i743TrxGBW";
 
-Future<List<AnimeDetails>> getWeeklySchedule({
+Future<List<TTAnime>> getWeeklySchedule({
   int? year,
   int? week,
   String? tz,
   String? airType,
 }) async {
   var uri = Uri.parse(
-    "$animescheduleApi/timetables"
+    "$animeScheduleApi/timetables"
     "${airType != null ? "/$airType" : ""}",
   );
   uri = uri.replace(
@@ -32,7 +34,14 @@ Future<List<AnimeDetails>> getWeeklySchedule({
         (value) => jsonDecode(value.body),
       );
 
-  final list = await AnimeDetails.parseList(res);
+  final list = TTAnime.parseList(res);
 
   return list;
+}
+
+Future<Anime> getAnimeDetails(String slug) async {
+  final json = await http
+      .get(Uri.parse("$animeScheduleApi/anime/$slug"))
+      .then((res) => jsonDecode(res.body));
+  return Anime.fromJson(json);
 }
