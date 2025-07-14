@@ -8,7 +8,6 @@ import 'package:itsu/animedetails.dart';
 import 'package:itsu/api.dart';
 import 'package:itsu/data.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:week_of_year/week_of_year.dart';
 
 const dayNames = {
@@ -20,6 +19,8 @@ const dayNames = {
   6: "Saturday",
   7: "Sunday",
 };
+
+const millisecondsinaday = (1000 * 60 * 60 * 24);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,8 +83,7 @@ class _HomePageState extends State<HomePage> {
             tz: await FlutterTimezone.getLocalTimezone(),
             airType: "sub",
           );
-          print(second.first.episodeDate);
-          return [...first, ...second];
+          return first + second;
         })(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -91,14 +91,17 @@ class _HomePageState extends State<HomePage> {
           }
           if (snapshot.hasData) {
             final schedule = snapshot.data!;
-            Map<String, List<AnimeDetails>> days = {};
+            Map<int, List<AnimeDetails>> days = {};
 
             for (var anime in schedule) {
-              if (days[DateFormat('yyyy-MM-dd').format(anime.episodeDate)] ==
-                  null) {
-                days[DateFormat('yyyy-MM-dd').format(anime.episodeDate)] = [];
+              final day =
+                  anime.episodeDate.millisecondsSinceEpoch ~/
+                  millisecondsinaday;
+
+              if (days[day] == null) {
+                days[day] = [];
               }
-              days[DateFormat('yyyy-MM-dd').format(anime.episodeDate)]!.add(
+              days[day]!.add(
                 anime,
               );
             }
@@ -140,13 +143,17 @@ class _HomePageState extends State<HomePage> {
                       pageDay = value + 1;
                     }),
                     itemBuilder: (context, dayindex) {
-                      final day = DateFormat('yyyy-MM-dd').format(
-                        schedule.first.episodeDate.add(
-                          Duration(days: dayindex),
-                        ),
-                      );
+                      if (schedule.isEmpty) {
+                        return Center(
+                          child: Text("No anime today :("),
+                        );
+                      }
 
-                      final data = days[day]!;
+
+                      final int day =
+                          schedule.first.episodeDate.millisecondsSinceEpoch ~/
+                          millisecondsinaday;
+                      final data = days[day + dayindex]!;
 
                       return ListView.builder(
                         itemCount: data.length,
